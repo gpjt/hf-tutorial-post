@@ -7,7 +7,7 @@ from safetensors.torch import load_file
 from transformers import AutoTokenizer
 
 from hf_wrapper.configuration_gpjtgpt2 import GPJTGPT2Config
-from hf_wrapper.modeling_gpjtgpt2 import GPJTGPT2Model
+from hf_wrapper.modeling_gpjtgpt2 import GPJTGPT2Model, GPJTGPT2ModelForCausalLM
 
 
 @click.command()
@@ -25,9 +25,17 @@ def main(model_config_path, model_safetensors_path, hf_model_name):
 
     GPJTGPT2Config.register_for_auto_class()
     GPJTGPT2Model.register_for_auto_class("AutoModel")
+    GPJTGPT2ModelForCausalLM.register_for_auto_class("AutoModelForCausalLM")
 
     config = GPJTGPT2Config(model_config)
-    model = GPJTGPT2Model(config)
+    config.auto_map = {
+        "AutoConfig": "configuration_gpjtgpt2.GPJTGPT2Config",
+        "AutoModel": "modeling_gpjtgpt2.GPJTGPT2Model",
+        "AutoModelForCausalLM": "modeling_gpjtgpt2.GPJTGPT2ModelForCausalLM",
+    }
+    config.architectures = ["GPJTGPT2ModelForCausalLM"]
+
+    model = GPJTGPT2ModelForCausalLM(config)
     model.model.load_state_dict(load_file(model_safetensors_path))
 
     model.push_to_hub(hf_model_name)
@@ -35,7 +43,6 @@ def main(model_config_path, model_safetensors_path, hf_model_name):
     tokenizer = AutoTokenizer.from_pretrained("gpt2", use_fast=True)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.push_to_hub(hf_model_name)
-
 
 
 if __name__ == "__main__":
