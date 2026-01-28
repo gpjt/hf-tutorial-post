@@ -17,7 +17,6 @@ class GPJTGPT2Model(PreTrainedModel):
 
 
     def forward(self, input_ids, **kwargs):
-        raise Exception("argh")
         return self.model.forward(input_ids)
 
 
